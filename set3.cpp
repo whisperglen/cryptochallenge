@@ -96,8 +96,9 @@ int call_challenge17()
     int i, j, k, p;
     int found = 0;
     //find padding bytes
+	//we start changing one byte previous to the last
     uc8_t* tmp = &scratch.data[scratch.used - AES_BLOCK_SIZE_BYTES - 1 - 1];
-    for (p = 1; p <= 16 && !found; p++, tmp--)
+    for (p = 1; p <= 16; p++, tmp--)
     {
         *tmp ^= 1;
 
@@ -106,37 +107,57 @@ int call_challenge17()
         {
             cout << "valid padding for " << p << endl;
             found = 1;
+			break;
         }
 
         //revert the modification
         *tmp ^= 1;
     }
 
+	uc8_t workingblk[AES_BLOCK_SIZE_BYTES];
+
+	for (i = 0; i < AES_BLOCK_SIZE_BYTES; i++)
+	{
+		workingblk[i] = i < AES_BLOCK_SIZE_BYTES - p ? 0 : p;
+	}
+
     int howmanyblocks = cyphertxt.used / AES_BLOCK_SIZE_BYTES;
     int blockidx = howmanyblocks - 1 - 1;
 
     do {
 
+		tmp = &scratch.data[AES_BLOCK_SIZE_BYTES * blockidx];
+
         for (j = p + 1; j <= 16; j++)
         {
+			for (k = AES_BLOCK_SIZE_BYTES - j + 1; k < AES_BLOCK_SIZE_BYTES; k++) {
+				tmp[k] ^= workingblk[k] ^ j;
+			}
+
             for (i = 1; i <= 0xFF; i++)
             {
-                uc8_t* tmp = &scratch.data[AES_BLOCK_SIZE_BYTES * blockidx];
-
-                for (k = 0; k < j; k++) {
-                    tmp[AES_BLOCK_SIZE_BYTES - 1 - k] = i ^ j;
-                }
-
+				tmp[AES_BLOCK_SIZE_BYTES - j] = i;
                 int valid = chal17_check_padding(&scratch);
                 if (valid)
                 {
-                    cout << "found " << j << " " << i << (char)(j ^ i) << endl;
+					tmp = &cyphertxt.data[AES_BLOCK_SIZE_BYTES * blockidx];
+                    cout << "found " << j << " " << i << " " << (char)(j ^ i ^ tmp[AES_BLOCK_SIZE_BYTES - j]) << endl;
+					workingblk[AES_BLOCK_SIZE_BYTES - j] = j ^ i ^ tmp[AES_BLOCK_SIZE_BYTES - j];
                     membuf_append_byte_auto(&knowndata, j ^ i);
                 }
             }
         }
 
-    } while (1);
+		p++;
+
+		if (p == 16)
+		{
+			blockidx--;
+			p = 0;
+			memset(workingblk, 0, sizeof(workingblk));
+		}
+
+    } while (blockidx >= 0);
 
     return 0;
 }

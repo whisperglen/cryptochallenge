@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <time.h>
 
 using std::string;
 using std::cin;

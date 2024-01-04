@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <iostream>
+#include <time.h>
 
 unsigned int chartoi(char c)
 {
