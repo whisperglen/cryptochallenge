@@ -124,7 +124,17 @@ int call_challenge17()
     int howmanyblocks = cyphertxt.used / AES_BLOCK_SIZE_BYTES;
     int blockidx = howmanyblocks - 1 - 1;
 
-    do {
+    if (p == 16)
+    {
+        blockidx--;
+        p = 0;
+        scratch.used -= AES_BLOCK_SIZE_BYTES;
+    }
+
+    membuf_append_byte_auto(&knowndata, 0);
+
+    while (blockidx >= 0)
+    {
 
 		tmp = &scratch.data[AES_BLOCK_SIZE_BYTES * blockidx];
 
@@ -140,24 +150,25 @@ int call_challenge17()
                 int valid = chal17_check_padding(&scratch);
                 if (valid)
                 {
-					tmp = &cyphertxt.data[AES_BLOCK_SIZE_BYTES * blockidx];
-                    cout << "found " << j << " " << i << " " << (char)(j ^ i ^ tmp[AES_BLOCK_SIZE_BYTES - j]) << endl;
-					workingblk[AES_BLOCK_SIZE_BYTES - j] = j ^ i ^ tmp[AES_BLOCK_SIZE_BYTES - j];
-                    membuf_append_byte_auto(&knowndata, j ^ i);
+					uc8_t *org = &cyphertxt.data[AES_BLOCK_SIZE_BYTES * blockidx];
+                    uc8_t value = j ^ i ^ org[AES_BLOCK_SIZE_BYTES - j];
+                    cout << "found " << j << " " << i << " " << (char)(value) << endl;
+					workingblk[AES_BLOCK_SIZE_BYTES - j] = value;
+                    memcpy(tmp, org, AES_BLOCK_SIZE_BYTES);
+                    membuf_prepend_byte_auto(&knowndata, value);
+                    break;
                 }
             }
         }
 
-		p++;
+		blockidx--;
+		p = 0;
+        scratch.used -= AES_BLOCK_SIZE_BYTES;
+		memset(workingblk, 0, sizeof(workingblk));
 
-		if (p == 16)
-		{
-			blockidx--;
-			p = 0;
-			memset(workingblk, 0, sizeof(workingblk));
-		}
+    };
 
-    } while (blockidx >= 0);
+    cout << "final " << knowndata.data << endl;
 
     return 0;
 }

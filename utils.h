@@ -37,6 +37,7 @@ void membuf_adjust_size(membuf* mb, size_t newsize);
 void membuf_free(membuf* mb);
 void membuf_copy(membuf* dst, membuf* src);
 void membuf_append_byte_auto(membuf* mb, uc8_t value);
+void membuf_prepend_byte_auto(membuf* mb, uc8_t value);
 
 size_t pad_data_buffer(uc8_t** memory, size_t* memsz, size_t used_size, size_t block_size);
 size_t unpad_data_buffer(uc8_t* data, size_t used_size);

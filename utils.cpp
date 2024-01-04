@@ -1,7 +1,8 @@
 
 #include "utils.h"
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <iostream>
 #include <time.h>
@@ -296,7 +297,6 @@ void membuf_copy(membuf* dst, membuf* src)
     dst->used = size;
 }
 
-
 void membuf_append_byte_auto(membuf* mb, uc8_t value)
 {
     int used = mb->used;
@@ -304,6 +304,22 @@ void membuf_append_byte_auto(membuf* mb, uc8_t value)
         membuf_adjust_size(mb, used + 1);
 
     mb->data[used] = value;
+    mb->used++;
+}
+
+void membuf_prepend_byte_auto(membuf* mb, uc8_t value)
+{
+    int used = mb->used;
+    if (used + 1 > mb->size)
+        membuf_adjust_size(mb, used + 1);
+
+    uc8_t* tmp = &mb->data[used];
+    for (int i = 0; i < used; i++, tmp--)
+    {
+        *tmp = *(tmp - 1);
+    }
+
+    mb->data[0] = value;
     mb->used++;
 }
 
