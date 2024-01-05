@@ -144,7 +144,7 @@ int call_challenge17()
 				tmp[k] ^= workingblk[k] ^ j;
 			}
 
-            for (i = 1; i <= 0xFF; i++)
+            for (i = 0; i <= 0xFF; i++)
             {
 				tmp[AES_BLOCK_SIZE_BYTES - j] = i;
                 int valid = chal17_check_padding(&scratch);
@@ -152,7 +152,7 @@ int call_challenge17()
                 {
 					uc8_t *org = &cyphertxt.data[AES_BLOCK_SIZE_BYTES * blockidx];
                     uc8_t value = j ^ i ^ org[AES_BLOCK_SIZE_BYTES - j];
-                    cout << "found " << j << " " << i << " " << (char)(value) << endl;
+                    //cout << "found " << j << " " << i << " " << (char)(value) << endl;
 					workingblk[AES_BLOCK_SIZE_BYTES - j] = value;
                     memcpy(tmp, org, AES_BLOCK_SIZE_BYTES);
                     membuf_prepend_byte_auto(&knowndata, value);

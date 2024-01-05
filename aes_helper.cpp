@@ -93,8 +93,9 @@ int aes_cbc_encrypt(const uc8_t* in, size_t insz, const uc8_t* key, const uc8_t*
     used = pad_data_buffer(&newin, &newinsz, insz, AES_BLOCK_SIZE_BYTES);
 
     uc8_t scratch[AES_BLOCK_SIZE_BYTES];
+    uc8_t localout[AES_BLOCK_SIZE_BYTES * 2];
 
-    const uc8_t* scratch1 = iv;
+    const uc8_t* xorval = iv;
     uc8_t* scratch2 = scratch;
 
     int tmp = 0;
@@ -102,16 +103,19 @@ int aes_cbc_encrypt(const uc8_t* in, size_t insz, const uc8_t* key, const uc8_t*
     int i = 0;
     while (i + AES_BLOCK_SIZE_BYTES <= used)
     {
-        xor_fixed(&newin[i], scratch1, scratch2, AES_BLOCK_SIZE_BYTES);
+        xor_fixed(&newin[i], xorval, scratch, AES_BLOCK_SIZE_BYTES);
 
-        ret = aes_ecb_encrypt(scratch2, AES_BLOCK_SIZE_BYTES, key, &output[i], &tmp);
+        ret = aes_ecb_encrypt(scratch, AES_BLOCK_SIZE_BYTES, key, localout, &tmp);
         if (ret < 0)
             break;
+        memcpy(&output[i], localout, AES_BLOCK_SIZE_BYTES);
 
-        scratch1 = &output[i];
+        xorval = &output[i];
 
         i += AES_BLOCK_SIZE_BYTES;
     }
+
+    free(newin);
 
     *outlen = i;
     return ret;

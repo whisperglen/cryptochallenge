@@ -178,6 +178,7 @@
     <ClCompile Include="set1.cpp" />
     <ClCompile Include="set2.cpp" />
     <ClCompile Include="set3.cpp" />
+    <ClCompile Include="tests.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>

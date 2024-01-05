@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 
+extern int run_tests();
 extern int call_set1();
 extern int call_set2();
 extern int call_set3();
@@ -12,6 +13,8 @@ int main()
 {
     int retcode = 0;
     std::cout << "Hello World!\n";
+
+    run_tests();
 
     retcode = call_set3();
 
