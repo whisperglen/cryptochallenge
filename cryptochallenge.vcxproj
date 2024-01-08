@@ -188,6 +188,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="challenge10.txt" />
+    <Text Include="challenge19.txt" />
+    <Text Include="challenge20.txt" />
     <Text Include="challenge4.txt" />
     <Text Include="challenge6.txt" />
     <Text Include="challenge7.txt" />

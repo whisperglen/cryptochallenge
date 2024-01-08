@@ -7,6 +7,13 @@
 #include <iostream>
 #include <time.h>
 
+
+int istext(int val)
+{
+    return isalnum(val) || isspace(val) || /*ispunct(val)*/ val == ',' ||
+             val == '!' || val == '-' || val == '.' || val == ';';
+}
+
 unsigned int chartoi(char c)
 {
     if (c >= '0' && c <= '9')
@@ -123,13 +130,40 @@ void character_frequency_table_init()
         i++;
     }
 
+    en_freq_tbl['a'] = 0.08167f;
+    en_freq_tbl['b'] = 0.01492f;
+    en_freq_tbl['c'] = 0.02782f;
+    en_freq_tbl['d'] = 0.04253f;
+    en_freq_tbl['e'] = 0.12702f;
+    en_freq_tbl['f'] = 0.02228f;
+    en_freq_tbl['g'] = 0.02015f;
+    en_freq_tbl['h'] = 0.06094f;
+    en_freq_tbl['i'] = 0.06966f;
+    en_freq_tbl['j'] = 0.00153f;
+    en_freq_tbl['k'] = 0.00772f;
+    en_freq_tbl['l'] = 0.04025f;
+    en_freq_tbl['m'] = 0.02406f;
+    en_freq_tbl['n'] = 0.06749f;
+    en_freq_tbl['o'] = 0.07507f;
+    en_freq_tbl['p'] = 0.01929f;
+    en_freq_tbl['q'] = 0.00095f;
+    en_freq_tbl['r'] = 0.05987f;
+    en_freq_tbl['s'] = 0.06327f;
+    en_freq_tbl['t'] = 0.09056f;
+    en_freq_tbl['u'] = 0.02758f;
+    en_freq_tbl['v'] = 0.00978f;
+    en_freq_tbl['w'] = 0.02360f;
+    en_freq_tbl['x'] = 0.00150f;
+    en_freq_tbl['y'] = 0.01974f;
+    en_freq_tbl['z'] = 0.00074f;
+
 #if 0
     std::cout << "\nFrequency table english text\n";
-    int xx = 0;
+    float xx = 0;
     i = 0;
     while (i < sizeof(en_freq_tbl)/ sizeof(en_freq_tbl[0]))
     {
-        int val = en_freq_tbl[i];
+        float val = en_freq_tbl[i];
         if (val)
         {
             xx += val;
@@ -138,7 +172,7 @@ void character_frequency_table_init()
 
         i++;
     }
-    std::cout << "totals: " << xx;
+    std::cout << "totals: " << xx << std::endl;
 #endif
 }
 
@@ -241,7 +275,7 @@ void random_seed_init()
     static int initialised = 0;
     if (initialised == 0)
     {
-        unsigned int seed = time(NULL);
+        unsigned int seed = (unsigned int)time(NULL);
         srand(seed);
         initialised = 1;
         std::cout << "seed: " << seed << std::endl;
@@ -257,6 +291,13 @@ void random_keygen(uc8_t* out, int size)
     {
         out[i] = rand() % 0xFF + 1;
     }
+}
+
+void membuf_init(membuf* mb)
+{
+    mb->data = NULL;
+    mb->size = 0;
+    mb->used = 0;
 }
 
 void membuf_adjust_size(membuf* mb, size_t newsize)
@@ -278,6 +319,17 @@ void membuf_adjust_size(membuf* mb, size_t newsize)
     }
 }
 
+void membuf_yield(membuf* mb, uc8_t **recipient)
+{
+    if (mb->data && recipient)
+    {
+        *recipient = mb->data;
+        mb->data = NULL;
+    }
+    mb->size = 0;
+    mb->used = 0;
+}
+
 void membuf_free(membuf* mb)
 {
     if (mb->data)
@@ -289,9 +341,14 @@ void membuf_free(membuf* mb)
     mb->used = 0;
 }
 
+void membuf_clear(membuf* mb)
+{
+    mb->used = 0;
+}
+
 void membuf_copy(membuf* dst, membuf* src)
 {
-    int size = dst->size < src->used ? dst->size : src->used;
+    size_t size = dst->size < src->used ? dst->size : src->used;
 
     memcpy(dst->data, src->data, size);
     dst->used = size;
@@ -305,6 +362,16 @@ void membuf_append_byte_auto(membuf* mb, uc8_t value)
 
     mb->data[used] = value;
     mb->used++;
+}
+
+void membuf_append_data_auto(membuf* mb, uc8_t *data, size_t sz)
+{
+    int used = mb->used;
+    if (used + sz > mb->size)
+        membuf_adjust_size(mb, used + sz);
+
+    memcpy(&(mb->data[used]), data, sz);
+    mb->used += sz;
 }
 
 void membuf_prepend_byte_auto(membuf* mb, uc8_t value)

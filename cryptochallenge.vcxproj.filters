@@ -67,5 +67,11 @@
     <Text Include="challenge10.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="challenge19.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="challenge20.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

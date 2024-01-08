@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
-#include <cassert>
+//#include <cassert>
 
 using std::string;
 using std::cin;
@@ -150,9 +150,42 @@ static int run_aes_tests()
 	return 0;
 }
 
+static int run_utils_tests()
+{
+	assertx(! istext(1));
+	assertx(istext(' '));
+	assertx(istext('!'));
+	assertx(istext(','));
+	assertx(istext('.'));
+	assertx(istext(0xa));
+	assertx(istext(0xd));
+	assertx(istext('-'));
+#if 0
+	assertx(istext('('));
+	assertx(istext('+'));
+	assertx(istext('@'));
+	assertx(istext('#'));
+	assertx(istext('%'));
+	assertx(istext('^'));
+	assertx(istext('&'));
+	assertx(istext('*'));
+	assertx(istext('"'));
+	assertx(istext('|'));
+	assertx(istext('\\'));
+	assertx(istext('/'));
+	assertx(istext('>'));
+	assertx(istext('~'));
+	assertx(istext('`'));
+	assertx(istext('\''));
+#endif
+
+	return 0;
+}
+
 
 int run_tests()
 {
+	run_utils_tests();
 	run_base64_tests();
 	run_aes_tests();
 
