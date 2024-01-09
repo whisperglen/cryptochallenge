@@ -25,7 +25,7 @@ int call_set3()
     int retcode = 0;
     std::cout << "This is Set 3\n";
 
-    retcode = call_challenge19();
+    retcode = call_challenge20();
 
     return retcode;
 }
@@ -509,4 +509,128 @@ static void chal19_do_search(const char* patterns[], membuf* texts, int datanum,
     } while (1);
 
     free(xordest);
+}
+
+int call_challenge20()
+{
+    const char* chal20_key = "By*4m@&uuRne5mwk";
+
+    membuf line = MEMBUF_INITIALISER;
+
+    membuf* texts = NULL;
+    membuf* memiter = NULL;
+    size_t datasz = 0;
+    int datanum = 0;
+    data_buffer_adjust((uc8_t**)&texts, &datasz, 60 * sizeof(membuf));
+    memset(texts, 0, datasz);
+
+    int used;
+
+    std::fstream xor_file;
+
+    xor_file.open("challenge20.txt", std::ios::in);
+
+    if (xor_file.is_open()) {
+        string sa;
+        // Read data from the file object and put it into a string.
+        while (std::getline(xor_file, sa)) {
+            size_t size = sa.length();
+            if (size <= 0) break;
+
+            data_buffer_adjust((uc8_t**)&texts, &datasz, (datanum + 1) * sizeof(uc8_t*));
+            memiter = &texts[datanum];
+            membuf_init(memiter);
+
+            membuf_adjust_size(&line, base64_dec_bufsz(size) + 1);
+            line.used = base64tohex((uc8_t*)sa.c_str(), size, line.data, line.size);
+            membuf_adjust_size(memiter, line.used);
+            aes_ctr_xcrypt(line.data, line.used, (uc8_t*)chal20_key, 0, memiter->data, &used);
+            memiter->used = used;
+
+            datanum++;
+        }
+
+        // Close the file object.
+        xor_file.close();
+    }
+
+    int i, j, k;
+    int mintxtlen = 1000;
+    int maxtxtlen = 0;
+    for (i = 0; i < datanum; i++, memiter++)
+    {
+        int len = texts[i].used;
+
+        if (len > 0 && len < mintxtlen)
+            mintxtlen = len;
+
+        if (len > maxtxtlen)
+            maxtxtlen = len;
+    }
+
+    character_frequency_table_init();
+
+    uc8_t* keystrm = (uc8_t*)malloc(maxtxtlen);
+    if (!keystrm) exit(-1);
+    memset(keystrm, 0, maxtxtlen);
+    uc8_t* xordest = (uc8_t*)malloc(maxtxtlen + 1);
+    if (!xordest) exit(-1);
+    uc8_t* local = (uc8_t*)malloc(datanum);
+    if (!local) exit(-1);
+
+    for (j = 0; j < maxtxtlen; j++)
+    {
+        float freq = 10.0f;
+        int count = 0;
+        for (i = 0; i < datanum; i++)
+        {
+            if (j < texts[i].used)
+            {
+                local[count] = texts[i].data[j];
+                count++;
+            }
+        }
+
+        for (k = 0; k <= 0xff; k++)
+        {
+            memset(xordest, k, datanum + 1);
+            xor_fixed(local, xordest, xordest, count);
+            float temp = character_frequency_calculate(xordest, count);
+            if (0.0f < temp && temp < freq)
+            {
+                //if(j == 0)
+                //    cout << temp << " " << xordest << endl;
+                freq = temp;
+                keystrm[j] = k;
+            }
+        }
+    }
+
+    keystrm[91] = 's' ^ texts[2].data[91];
+    keystrm[94] = 'c' ^ texts[4].data[94];
+    keystrm[95] = 'k' ^ texts[2].data[95];
+    keystrm[101] = 'p' ^ texts[21].data[101];
+    keystrm[105] = 'e' ^ texts[21].data[105];
+    keystrm[106] = 'h' ^ texts[26].data[106];
+    keystrm[107] = 'o' ^ texts[26].data[107];
+    keystrm[108] = 'l' ^ texts[26].data[108];
+    keystrm[109] = 'e' ^ texts[26].data[109];
+    keystrm[110] = ' ' ^ texts[26].data[110];
+    keystrm[111] = 's' ^ texts[26].data[111];
+    keystrm[112] = 'c' ^ texts[26].data[112];
+    keystrm[113] = 'e' ^ texts[26].data[113];
+    keystrm[114] = 'n' ^ texts[26].data[114];
+    keystrm[115] = 'e' ^ texts[26].data[115];
+    keystrm[116] = 'r' ^ texts[26].data[116];
+    keystrm[117] = 'y' ^ texts[26].data[117];
+
+    for (i = 0; i < datanum; i++)
+    {
+        memset(xordest, 0, maxtxtlen + 1);
+        xor_fixed(texts[i].data, keystrm, xordest, texts[i].used);
+
+        cout << xordest << endl;
+    }
+
+    return 0;
 }

@@ -119,8 +119,9 @@ void character_frequency_table_init()
         "You now have our permission to make \"ETAOIN SHRDLU\" jokes on Twitter."
         "Cryptography Services | NCC Group";
 
-    const float increment = 1.0f / (sizeof(text) - 1);
     int i = 0;
+#if 1
+    const float increment = 1.0f / (sizeof(text) - 1);
     while (i < sizeof(text) - 1)
     {
         int a = tolower(text[i]);
@@ -129,7 +130,9 @@ void character_frequency_table_init()
 
         i++;
     }
+#endif
 
+#if 0
     en_freq_tbl['a'] = 0.08167f;
     en_freq_tbl['b'] = 0.01492f;
     en_freq_tbl['c'] = 0.02782f;
@@ -156,6 +159,7 @@ void character_frequency_table_init()
     en_freq_tbl['x'] = 0.00150f;
     en_freq_tbl['y'] = 0.01974f;
     en_freq_tbl['z'] = 0.00074f;
+#endif
 
 #if 0
     std::cout << "\nFrequency table english text\n";
