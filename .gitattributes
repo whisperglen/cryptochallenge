@@ -61,3 +61,8 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+# Instructions for Linguist library (source code detection)
+###############################################################################
+openssl-3.0.12/** linguist-documentation

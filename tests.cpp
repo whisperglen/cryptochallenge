@@ -3,6 +3,7 @@
 #include "hextobase64.h"
 #include "utils.h"
 #include "aes_helper.h"
+#include "mt19937.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,15 +153,15 @@ static int run_aes_tests()
 
 static int run_utils_tests()
 {
-	assertx(! istext(1));
-	assertx(istext(' '));
-	assertx(istext('!'));
-	assertx(istext(','));
-	assertx(istext('.'));
-	assertx(istext(0xa));
-	assertx(istext(0xd));
-	assertx(istext('-'));
-#if 0
+	assertx(! istext_r(1));
+	assertx(istext_r(' '));
+	assertx(istext_r('!'));
+	assertx(istext_r(','));
+	assertx(istext_r('.'));
+	assertx(istext_r(0xa));
+	assertx(istext_r(0xd));
+	assertx(istext_r('-'));
+#if 1
 	assertx(istext('('));
 	assertx(istext('+'));
 	assertx(istext('@'));
@@ -185,6 +186,9 @@ static int run_utils_tests()
 
 int run_tests()
 {
+	mt19937_seed(1705044000);
+	mt19937_gen();
+
 	run_utils_tests();
 	run_base64_tests();
 	run_aes_tests();

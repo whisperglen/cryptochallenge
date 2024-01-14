@@ -2,9 +2,11 @@
 #include "hextobase64.h"
 #include "utils.h"
 #include "aes_helper.h"
+#include "mt19937.h"
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <windows.h>
 
 using std::string;
 using std::cin;
@@ -25,7 +27,7 @@ int call_set3()
     int retcode = 0;
     std::cout << "This is Set 3\n";
 
-    retcode = call_challenge20();
+    retcode = call_challenge23();
 
     return retcode;
 }
@@ -247,7 +249,7 @@ static int str_istext(const uc8_t* data, int len)
 
     for (int i = 0; i < len; i++)
     {
-        if (!istext(data[i]))
+        if (!istext_r(data[i]))
         {
             ret = 0;
             break;
@@ -606,23 +608,26 @@ int call_challenge20()
         }
     }
 
-    keystrm[91] = 's' ^ texts[2].data[91];
-    keystrm[94] = 'c' ^ texts[4].data[94];
-    keystrm[95] = 'k' ^ texts[2].data[95];
-    keystrm[101] = 'p' ^ texts[21].data[101];
-    keystrm[105] = 'e' ^ texts[21].data[105];
-    keystrm[106] = 'h' ^ texts[26].data[106];
-    keystrm[107] = 'o' ^ texts[26].data[107];
-    keystrm[108] = 'l' ^ texts[26].data[108];
-    keystrm[109] = 'e' ^ texts[26].data[109];
-    keystrm[110] = ' ' ^ texts[26].data[110];
-    keystrm[111] = 's' ^ texts[26].data[111];
-    keystrm[112] = 'c' ^ texts[26].data[112];
-    keystrm[113] = 'e' ^ texts[26].data[113];
-    keystrm[114] = 'n' ^ texts[26].data[114];
-    keystrm[115] = 'e' ^ texts[26].data[115];
-    keystrm[116] = 'r' ^ texts[26].data[116];
-    keystrm[117] = 'y' ^ texts[26].data[117];
+    if (maxtxtlen >= 117)
+    {
+        keystrm[91] = 's' ^ texts[2].data[91];
+        keystrm[94] = 'c' ^ texts[4].data[94];
+        keystrm[95] = 'k' ^ texts[2].data[95];
+        keystrm[101] = 'p' ^ texts[21].data[101];
+        keystrm[105] = 'e' ^ texts[21].data[105];
+        keystrm[106] = 'h' ^ texts[26].data[106];
+        keystrm[107] = 'o' ^ texts[26].data[107];
+        keystrm[108] = 'l' ^ texts[26].data[108];
+        keystrm[109] = 'e' ^ texts[26].data[109];
+        keystrm[110] = ' ' ^ texts[26].data[110];
+        keystrm[111] = 's' ^ texts[26].data[111];
+        keystrm[112] = 'c' ^ texts[26].data[112];
+        keystrm[113] = 'e' ^ texts[26].data[113];
+        keystrm[114] = 'n' ^ texts[26].data[114];
+        keystrm[115] = 'e' ^ texts[26].data[115];
+        keystrm[116] = 'r' ^ texts[26].data[116];
+        keystrm[117] = 'y' ^ texts[26].data[117];
+    }
 
     for (i = 0; i < datanum; i++)
     {
@@ -633,4 +638,187 @@ int call_challenge20()
     }
 
     return 0;
+}
+
+int call_challenge21()
+{
+    int seed = 1704893663;// time(NULL);
+    cout << "mt19937 seed: " << seed << endl;
+
+    mt19937_seed(seed);
+
+    for (int i = 0; i < 10; i++)
+    {
+        cout << mt19937_gen() << endl;
+    }
+
+    return 0;
+}
+
+int call_challenge22()
+{
+#define CHAL22_NUM_STEPS 5
+
+    int i = 0;
+    unsigned int seeds[CHAL22_NUM_STEPS];
+    unsigned int vals[CHAL22_NUM_STEPS];
+
+    random_seed_init();
+
+    for (i = 0; i < CHAL22_NUM_STEPS; i++)
+    {
+        int towait = (int)rand() % 260 + 40; //upto 5min
+        cout << "Waiting for a couple of seconds..\n";
+        Sleep(towait * 1000);
+
+        seeds[i] = (unsigned int)time(NULL);
+        towait = (int)rand() % 10 + 5;
+        Sleep(towait * 1000);
+
+        mt19937_seed(seeds[i]);
+        vals[i] = mt19937_gen();
+        cout << i << ". generated value is " << vals[i] << endl;
+    }
+
+    unsigned int now = (unsigned int)time(NULL);
+    for (i = CHAL22_NUM_STEPS - 1; i >= 0; i--)
+    {
+        cout << "Trying to find seed " << i << " .. ";
+        while (1)
+        {
+            mt19937_seed(now);
+            if (mt19937_gen() == vals[i])
+            {
+                cout << now << (now == seeds[i] ? " ok" : " nok") << endl;
+                break;
+            }
+            now--;
+        }
+    }
+
+    return 0;
+}
+
+static unsigned int mt_19937_untemper(unsigned int val)
+{
+    int i;
+    uint32_t res;
+    int shiftv;
+    uint32_t andv;
+    /*
+    y = y ^ ((y >> 11) & 0xFFFFFFFF);
+    y = y ^ ((y << 7) & 0x9D2C5680U);
+    y = y ^ ((y << 15) & 0xEFC60000U);
+    y = y ^ (y >> 18);
+    */
+    //reverse y ^ (y >> 18) -> bit[n] = bit[n+18] ^ bit[n]
+    res = 0;
+    shiftv = 18;
+    for (i = 31; i >= 0; i--)
+    {
+        uint32_t bitn = (val >> i) & 1;
+        uint32_t bitn1 = (res >> (i + shiftv)) & 1;
+        bitn = bitn ^ bitn1;
+        bitn = bitn << i;
+        res = res | bitn;
+    }
+    //reverse  y ^ ((y << 15) & 0xEFC60000U) -> bit[n] = bit[n-18] & andv[n]
+    val = res;
+    res = 0;
+    shiftv = 15;
+    andv = 0xEFC60000U;
+    for (i = 0; i <= 31; i++)
+    {
+        uint32_t bitn = (val >> i) & 1;
+        uint32_t bitn1 = ((res << shiftv) >> i) & 1;
+        uint32_t andvn1 = ((andv) >> i) & 1;
+        bitn1 = bitn1 & andvn1;
+        bitn = bitn ^ bitn1;
+        bitn = bitn << i;
+        res = res | bitn;
+    }
+    //reverse  y ^ ((y << 7) & 0x9D2C5680) -> bit[n] = bit[n-7] & andv[n]
+    val = res;
+    res = 0;
+    shiftv = 7;
+    andv = 0x9D2C5680U;
+    for (i = 0; i <= 31; i++)
+    {
+        uint32_t bitn = (val >> i) & 1;
+        uint32_t bitn1 = ((res << shiftv) >> i) & 1;
+        uint32_t andvn1 = ((andv) >> i) & 1;
+        bitn1 = bitn1 & andvn1;
+        bitn = bitn ^ bitn1;
+        bitn = bitn << i;
+        res = res | bitn;
+    }
+    //reverse  y ^ (y >> 11) -> bit[n] = bit[n+11] ^ bit[n]
+    val = res;
+    res = 0;
+    shiftv = 11;
+    for (i = 31; i >= 0; i--)
+    {
+        uint32_t bitn = (val >> i) & 1;
+        uint32_t bitn1 = (res >> (i + shiftv)) & 1;
+        bitn = bitn ^ bitn1;
+        bitn = bitn << i;
+        res = res | bitn;
+    }
+
+    return res;
+}
+
+static void mt_19937_permute(uint32_t* mt_buf, uint32_t numvals);
+
+int call_challenge23()
+{
+#define MT_19937_NUM_VALS 624
+
+    uint32_t val = 1628626723U;
+    if (mt_19937_untemper(2293680981U) == val)
+    {
+        cout << "untemper ok\n";
+    }
+
+    uint32_t* mt_data = (uint32_t*)malloc(MT_19937_NUM_VALS * sizeof(uint32_t));
+    if (!mt_data) exit(E_OUTOFMEMORY);
+
+    random_seed_init();
+    int i = rand() % 5000;
+
+    mt19937_seed((int)time(NULL));
+
+    for (; i > 0; i--)
+        mt19937_gen();
+
+    for (i = 0; i < MT_19937_NUM_VALS; i++)
+    {
+        mt_data[i] = mt_19937_untemper(mt19937_gen());
+    }
+    mt_19937_permute(mt_data, MT_19937_NUM_VALS);
+
+    for (i = 0; i < MT_19937_NUM_VALS; i++)
+    {
+        if (mt_19937_untemper(mt19937_gen()) != mt_data[i])
+        {
+            cout << "nooooo...\n";
+        }
+    }
+
+    return 0;
+}
+
+static void mt_19937_permute(uint32_t *mt_buf, uint32_t numvals)
+{
+    for (uint32_t i = 0; i < numvals; i++)
+    {
+        uint32_t x = (mt_buf[i] & 0x80000000U) |
+            (mt_buf[(i + 1) % numvals] & 0x7FFFFFFFU);
+        uint32_t xA = x >> 1;
+        if ((x & 1) != 0) // lowest bit of x is 1
+        {
+            xA = xA ^ 0x9908B0DFU;
+        }
+        mt_buf[i] = mt_buf[(i + 397) % numvals] ^ xA;
+    }
 }

@@ -8,6 +8,9 @@ typedef char sc8_t;
 
 int istext(int val);
 
+/** istext with reduced numbers of symbols */
+int istext_r(int val);
+
 unsigned int chartoi(char c);
 
 int hexstring_to_bytes(const char* in, size_t insz, unsigned char* out, size_t outsz);

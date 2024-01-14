@@ -7,11 +7,15 @@
 #include <iostream>
 #include <time.h>
 
+int istext_r(int val)
+{
+    return isalnum(val) || isspace(val) || val == ',' ||
+        val == '!' || val == '-' || val == '.' || val == ';';
+}
 
 int istext(int val)
 {
-    return isalnum(val) || isspace(val) || /*ispunct(val)*/ val == ',' ||
-             val == '!' || val == '-' || val == '.' || val == ';';
+    return isalnum(val) || isspace(val) || ispunct(val);
 }
 
 unsigned int chartoi(char c)
@@ -198,7 +202,7 @@ float character_frequency_calculate(const unsigned char* input, size_t insz)
 
 #if 0
     std::cout << "\nFrequency table NEW text\n";
-    int xx = 0;
+    float xx = 0;
     i = 0;
     while (i < sizeof(en_freq_tbl) / sizeof(en_freq_tbl[0]))
     {
