@@ -27,7 +27,7 @@
     <ClCompile Include="set2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="set3.cpp">

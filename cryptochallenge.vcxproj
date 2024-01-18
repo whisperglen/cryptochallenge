@@ -174,7 +174,7 @@
   <ItemGroup>
     <ClCompile Include="aes_helper.cpp" />
     <ClCompile Include="hextobase64.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="_main.cpp" />
     <ClCompile Include="mt19937.cpp" />
     <ClCompile Include="set1.cpp" />
     <ClCompile Include="set2.cpp" />
