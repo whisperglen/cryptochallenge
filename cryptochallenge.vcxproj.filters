@@ -42,6 +42,9 @@
     <ClCompile Include="mt19937.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="set4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hextobase64.h">
@@ -77,6 +80,9 @@
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="challenge20.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="challenge25a.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

@@ -43,6 +43,7 @@ void membuf_clear(membuf* mb);
 void membuf_adjust_size(membuf* mb, size_t newsize);
 void membuf_free(membuf* mb);
 void membuf_copy(membuf* dst, membuf* src);
+void membuf_copy_auto(membuf* dst, membuf* src);
 void membuf_append_byte_auto(membuf* mb, uc8_t value);
 void membuf_append_data_auto(membuf* mb, uc8_t* data, size_t sz);
 void membuf_prepend_byte_auto(membuf* mb, uc8_t value);

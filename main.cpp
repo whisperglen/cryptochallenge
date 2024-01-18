@@ -8,6 +8,7 @@ extern int run_tests();
 extern int call_set1();
 extern int call_set2();
 extern int call_set3();
+extern int call_set4();
 
 int main()
 {
@@ -16,7 +17,7 @@ int main()
 
     run_tests();
 
-    retcode = call_set3();
+    retcode = call_set4();
 
     std::cout << std::endl;
     system("pause");

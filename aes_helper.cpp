@@ -180,3 +180,41 @@ int aes_cbc_decrypt(const uc8_t* in, size_t insz, const uc8_t* key, const uc8_t*
 
     return ret;
 }
+
+int aes_ctr_xcrypt(const uc8_t* in, size_t insz, const uc8_t* key, uint64_t nonce, uc8_t* output, int* outlen)
+{
+    int ret = 0;
+
+    uc8_t iv[AES_BLOCK_SIZE_BYTES];
+    uc8_t local[AES_BLOCK_SIZE_BYTES * 2];
+    int64_t counter = 0;
+
+    int used;
+
+    memcpy(iv, &nonce, AES_BLOCK_SIZE_BYTES / 2);
+
+    int xorsz = AES_BLOCK_SIZE_BYTES;
+    int i = 0;
+    while (i < insz)
+    {
+        memcpy(&iv[AES_BLOCK_SIZE_BYTES / 2], &counter, AES_BLOCK_SIZE_BYTES / 2);
+
+        ret = aes_ecb_encrypt(iv, AES_BLOCK_SIZE_BYTES, key, local, &used);
+        if (ret < 0)
+            break;
+
+        if (i + 16 > insz)
+        {
+            xorsz = insz - i;
+        }
+
+        xor_fixed(&in[i], local, &output[i], xorsz);
+
+        i += xorsz;
+        counter++;
+    }
+
+    *outlen = i;
+
+    return ret;
+}

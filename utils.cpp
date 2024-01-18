@@ -362,6 +362,12 @@ void membuf_copy(membuf* dst, membuf* src)
     dst->used = size;
 }
 
+void membuf_copy_auto(membuf* dst, membuf* src)
+{
+    membuf_adjust_size(dst, src->used);
+    membuf_copy(dst, src);
+}
+
 void membuf_append_byte_auto(membuf* mb, uc8_t value)
 {
     int used = mb->used;

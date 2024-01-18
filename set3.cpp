@@ -7,6 +7,7 @@
 #include <string>
 #include <fstream>
 #include <windows.h>
+#include <cassert>
 
 using std::string;
 using std::cin;
@@ -27,14 +28,14 @@ int call_set3()
     int retcode = 0;
     std::cout << "This is Set 3\n";
 
-    retcode = call_challenge23();
+    retcode = call_challenge24();
 
     return retcode;
 }
 
 const char *chal17_key = "$Lh3lb778%bX7gX6";
 
-int chal17_encrypt(membuf *output)
+static int chal17_encrypt(membuf *output)
 {
     int ret = 0;
     const char* mystrings[] = {
@@ -74,7 +75,7 @@ int chal17_encrypt(membuf *output)
     return ret;
 }
 
-int chal17_check_padding(membuf* cyphertxt)
+static int chal17_check_padding(membuf* cyphertxt)
 {
     static membuf mbout = MEMBUF_INITIALISER;
 
@@ -136,6 +137,25 @@ int call_challenge17()
 
     membuf_append_byte_auto(&knowndata, 0);
 
+    /**
+    * 1. first step
+    * workingblock contains the plaintext bytes that we discovered; so far only the padding bytes
+    * what we do is transform the plaintext bytes into a padding bytes by:
+    * xoring with itself (workingblock), then xoring with the wanted padding byte (j)
+    * 
+    * 2. second step
+    * x is the plaintext; we need to find this
+    * d is the decrypted data
+    * c is the cyphertext from the previous block
+    * j is the new padding we want
+    * i is the replacement we made in the previous block cyphertext
+    * 
+    * x = d ^ c
+    * j = d ^ i
+    * j ^ i = d
+    * x = j ^ i ^ c
+    */
+
     while (blockidx >= 0)
     {
 
@@ -144,7 +164,7 @@ int call_challenge17()
         for (j = p + 1; j <= 16; j++)
         {
 			for (k = AES_BLOCK_SIZE_BYTES - j + 1; k < AES_BLOCK_SIZE_BYTES; k++) {
-				tmp[k] ^= workingblk[k] ^ j;
+				tmp[k] ^= workingblk[k] ^ j; //see 1. first step
 			}
 
             for (i = 0; i <= 0xFF; i++)
@@ -154,7 +174,7 @@ int call_challenge17()
                 if (valid)
                 {
 					uc8_t *org = &cyphertxt.data[AES_BLOCK_SIZE_BYTES * blockidx];
-                    uc8_t value = j ^ i ^ org[AES_BLOCK_SIZE_BYTES - j];
+                    uc8_t value = j ^ i ^ org[AES_BLOCK_SIZE_BYTES - j]; //see 2. second step
                     //cout << "found " << j << " " << i << " " << (char)(value) << endl;
 					workingblk[AES_BLOCK_SIZE_BYTES - j] = value;
                     memcpy(tmp, org, AES_BLOCK_SIZE_BYTES);
@@ -270,7 +290,7 @@ static int memiszero(uc8_t* data, int size)
     return (i == size);
 }
 
-void memadd(uc8_t* dst, int val, int size)
+static void memadd(uc8_t* dst, int val, int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -821,4 +841,169 @@ static void mt_19937_permute(uint32_t *mt_buf, uint32_t numvals)
         }
         mt_buf[i] = mt_buf[(i + 397) % numvals] ^ xA;
     }
+}
+
+static int mt19937_stream_xcrypt(const uc8_t* in, size_t insz, uint32_t nonce, uc8_t* output, int* outlen)
+{
+    int ret = 0;
+
+    int limit = insz;// min(insz, *outlen);
+
+    mt19937_seed(nonce);
+
+    int i = 0;
+    while (i < limit)
+    {
+        uc8_t genval = mt19937_gen();
+
+        output[i] = in[i] ^ genval;
+
+        i++;
+    }
+
+    *outlen = i;
+
+    return ret;
+}
+
+static int chal24_create_cyphertext(membuf* out)
+{
+    random_seed_init();
+
+    uint32_t seed = 0;
+    random_keygen((uc8_t*)&seed, 2); //helped by little endian
+    assert(seed <= 0xFFFF);
+
+    cout << "chal24 generated seed: " << seed << endl;
+
+    int prefix_len = rand() % 20 + 100;
+
+    membuf input = MEMBUF_INITIALISER;
+
+    membuf_adjust_size(&input, prefix_len + 14 + 1);
+
+    random_keygen(input.data, prefix_len);
+    input.used += prefix_len;
+    memset(&input.data[prefix_len], 'A', 14);
+    input.used += 14;
+    membuf_append_byte_auto(&input, 0);
+
+    membuf_adjust_size(out, input.size);
+
+    int used = 0;
+    mt19937_stream_xcrypt(input.data, input.used, seed, out->data, &used);
+    out->used = used;
+
+    membuf_free(&input);
+    return 0;
+}
+
+static uint32_t chal24_assemble_token()
+{
+    uint32_t ret = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        ret = (ret << 8) + (mt19937_gen() & 0xFF);
+    }
+    return ret;
+}
+
+static uint32_t chal24_get_passwd_token()
+{
+    uint32_t ret = 0;
+
+    int option = rand() % 2;
+    if (option)
+    {
+        //return mt19937 token
+        uint32_t seed = time(NULL);
+        mt19937_seed(seed);
+        int cycles = rand() % 624 + 2 * 624;
+        for (int i = 0; i < cycles; i++)
+            mt19937_gen();
+        ret = chal24_assemble_token();
+        cout << "Hint token seed: " << seed << endl;
+    }
+    else
+    {
+        random_keygen((uc8_t*)&ret, sizeof(ret));
+    }
+
+    return ret;
+}
+
+int call_challenge24()
+{
+    membuf out = MEMBUF_INITIALISER;
+    membuf cypher = MEMBUF_INITIALISER;
+
+    chal24_create_cyphertext(&cypher);
+
+    membuf_adjust_size(&out, cypher.used);
+
+    membuf searchtxt = MEMBUF_INITIALISER;
+    membuf_adjust_size(&searchtxt, 15);
+    memset(searchtxt.data, 'A', 14);
+    searchtxt.used = 14;
+    membuf_append_byte_auto(&searchtxt, 0);
+
+    uint32_t i;
+    uint32_t count = 0;
+    int used = 0;
+    const uint32_t limit = 0xFFFF;
+    for (i = 0; i <= limit; i++)
+    {
+        if (count < i / (limit / 10))
+        {
+            count = i / (limit / 10);
+            cout << " " << count;
+        }
+        mt19937_stream_xcrypt(cypher.data, cypher.used, i, out.data, &used);
+        out.used = used;
+        //if (i == seed)
+        {
+            if (strstr((char*)out.data, (char*)searchtxt.data))
+            {
+                //found
+                cout << endl << "Match found. Index is: " << i << endl;
+                break;
+            }
+        }
+    }
+
+    membuf_free(&out);
+    membuf_free(&cypher);
+    membuf_free(&searchtxt);
+
+
+    for (int i = 0; i < 10; i++)
+    {
+        uint32_t iter = time(NULL);
+        uint32_t time_limit = iter - (60 * 60 * 24);
+
+        uint32_t value = chal24_get_passwd_token();
+
+        int found = 0;
+
+        for (;iter >= time_limit && !found; iter--)
+        {
+            mt19937_seed(iter);
+
+            int calc = 0;
+
+            for (int j = 0; j < 3000; j++)
+            {
+                calc = (calc << 8) + (mt19937_gen() & 0xFF);
+                if (value == calc)
+                {
+                    found = 1;
+                    break;
+                }
+            }
+        }
+
+        cout << "Token value: " << value << (found ? " was " : " wasn't ") << "a mt19937 generated value. Iteration: " << iter << endl;
+    }
+
+    return 0;
 }
