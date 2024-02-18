@@ -9,16 +9,21 @@
 
 int istext_r(int val)
 {
-    return isalnum(val) || isspace(val) || val == ',' ||
+    return isalnum(val) || (val == ' ') || (val == 0xa) || (val == 0xd) || val == ',' ||
         val == '!' || val == '-' || val == '.' || val == ';';
 }
 
 int istext(int val)
 {
-    return isalnum(val) || isspace(val) || ispunct(val);
+    return isalnum(val) || (val == ' ') || (val == 0xa) || (val == 0xd) || ispunct(val);
 }
 
-unsigned int chartoi(char c)
+int ispasswd(int val)
+{
+    return isalnum(val) || ispunct(val);
+}
+
+int hexchartoi(char c)
 {
     if (c >= '0' && c <= '9')
     {
@@ -32,10 +37,11 @@ unsigned int chartoi(char c)
     {
         return c - 'A' + 0xa;
     }
+    std::cout << "\nhexchartoi unexpected " << (int)c << std::endl;
     return 0;
 }
 
-unsigned char itochar(int c)
+char itohexchar(int c)
 {
     if (c >= 0 && c <= 9)
     {
@@ -45,7 +51,8 @@ unsigned char itochar(int c)
     {
         return c - 0xa + 'a';
     }
-    return 0;
+    std::cout << "\nitohexchar unexpected " << c << std::endl;
+    return '!';
 }
 
 int hexstring_to_bytes(const char* in, size_t insz, unsigned char* out, size_t outsz)
@@ -56,7 +63,7 @@ int hexstring_to_bytes(const char* in, size_t insz, unsigned char* out, size_t o
     {
         if (in[i] == 0) break;
 
-        out[i] = (chartoi(in[2 * i]) << 4) + chartoi(in[2 * i + 1]);
+        out[i] = (hexchartoi(in[2 * i]) << 4) + hexchartoi(in[2 * i + 1]);
         i++;
     }
 
@@ -69,8 +76,8 @@ int bytes_to_hexstring(const unsigned char* in, size_t insz, unsigned char* out,
 
     while (2 * i + 1 < outsz && i < insz)
     {
-        out[2 * i] = itochar(in[i] >> 4);
-        out[2 * i + 1] = itochar(in[i] & 0xf);
+        out[2 * i] = itohexchar(in[i] >> 4);
+        out[2 * i + 1] = itohexchar(in[i] & 0xf);
         i++;
     }
 
@@ -278,7 +285,7 @@ void data_buffer_adjust(uc8_t ** memory, size_t* allocatedsz, size_t newsize)
     }
 }
 
-void random_seed_init()
+void random_init()
 {
     static int initialised = 0;
     if (initialised == 0)
@@ -290,14 +297,35 @@ void random_seed_init()
     }
 }
 
-void random_keygen(uc8_t* out, int size)
+void random_bytes(uc8_t* out, int size)
 {
-    random_seed_init();
+    random_init();
 
     int i;
     for (i = 0; i < size; i++)
     {
-        out[i] = rand() % 0xFF + 1;
+        out[i] = rand() % 0x100;
+    }
+}
+
+void random_text(uc8_t* out, int size)
+{
+    random_init();
+
+    int i;
+    for (i = 0; i < size; )
+    {
+        int val = rand();
+        uc8_t* itr = (uc8_t*)&val;
+        for (int j = 0; j < sizeof(val); j++, itr++)
+        {
+            if (ispasswd(*itr))
+            {
+                out[i] = *itr;
+                i++;
+                break;
+            }
+        }
     }
 }
 
@@ -451,4 +479,29 @@ size_t unpad_data_buffer(uc8_t* data, size_t used_size)
     }
 
     return ret;
+}
+
+void make_printable(uc8_t* text, int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        int val = text[i];
+        if (!ispasswd(val))
+            text[i] = ' ';
+    }
+}
+
+
+void MD4(
+    char* hash_out,
+    const char* str,
+    uint32_t len)
+{
+    MD4_CTX ctx;
+    unsigned int ii;
+
+    MD4_Init(&ctx);
+    for (ii = 0; ii < len; ii += 1)
+        MD4_Update(&ctx, (const unsigned char*)str + ii, 1);
+    MD4_Final((unsigned char*)hash_out, &ctx);
 }

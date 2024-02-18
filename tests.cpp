@@ -153,6 +153,7 @@ static int run_aes_tests()
 
 static int run_utils_tests()
 {
+	assertx(! istext_r(0));
 	assertx(! istext_r(1));
 	assertx(istext_r(' '));
 	assertx(istext_r('!'));
@@ -180,15 +181,50 @@ static int run_utils_tests()
 	assertx(istext('\''));
 #endif
 
+#if 0
+	char someText[10];
+	char hexText[19];
+	hexText[18] = 0;
+	someText[9] = 0;
+	for (int i = 0; i < 20; i++)
+	{
+		random_text((uc8_t*)someText, 9);
+		bytes_to_hexstring((uc8_t*)someText, 9, (uc8_t*)hexText, 18);
+		cout << someText << " <-> " << hexText << endl;
+	}
+#endif
+#if 0
+	char txt[3] = { 0,0,0 };
+	for (int i = 0; i <= 0xFF; i++)
+	{
+		bytes_to_hexstring((uc8_t*)&i, 1, (uc8_t*)txt, 2);
+		cout << txt << " " << (isspace(i) ? "s" : "") << (ispunct(i) ? "p" : "") << (isalnum(i) ? "a" : "") << (isprint(i) ? "r" : "") << endl;
+	}
+	uc8_t bytes[0x100];
+	for (int i = 0; i <= 0xFF; i++)
+	{
+		bytes[i] = (uc8_t)i;
+	}
+	char converted[0x100 * 2 + 1];
+	memset(converted, 0, sizeof converted);
+	bytes_to_hexstring(bytes, sizeof bytes, (uc8_t*)converted, 0x100 * 2);
+	cout << converted << endl;
+#endif
+
 	return 0;
 }
 
-
-int run_tests()
+static int run_mt19937_tests()
 {
 	mt19937_seed(1705044000);
 	mt19937_gen();
 
+	return 0;
+}
+
+int run_tests()
+{
+	run_mt19937_tests();
 	run_utils_tests();
 	run_base64_tests();
 	run_aes_tests();

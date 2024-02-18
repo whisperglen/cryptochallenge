@@ -850,10 +850,23 @@ int chal16_prepare(const char *input, uc8_t **out, size_t *outsz)
 
     data_buffer_adjust(&newin, &newinsz, newsz + 1);
 
-    newin[0] = 0;
-    strcat((char*)newin, prefix);
-    strcat((char*)newin, input);
-    strcat((char*)newin, suffix);
+    strcpy((char*)newin, prefix);
+    //remove ; and = from input text
+    uc8_t* dest = newin + strlen(prefix);
+    while (*input)
+    {
+        if (*input == ';' || *input == '=')
+        {
+            *dest = '_';
+        }
+        else
+        {
+            *dest = *input;
+        }
+        dest++;
+        input++;
+    }
+    strcpy((char*)dest, suffix);
 
     uc8_t iv[AES_BLOCK_SIZE_BYTES];
     gen_random_key(iv, AES_BLOCK_SIZE_BYTES);
