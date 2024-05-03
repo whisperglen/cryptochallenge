@@ -31,13 +31,17 @@ int hamming_distance_calculate(const unsigned char* first, const unsigned char* 
 
 void data_buffer_adjust(uc8_t** memory, size_t* allocatedsz, size_t newsize);
 
+/** helpers around the C rand and seed functions */
+/* random_init makes sure the seed function is called once per process */
 void random_init();
 void random_text(uc8_t* out, int size);
 void random_bytes(uc8_t* out, int size);
+/* for backwards compatibility */
 #define random_seed_init() random_init()
 #define random_keygen(out, size) random_bytes(out, size)
 
-typedef struct MEMBUF
+/** membuf* are some dynamic memory helpers that keep track of the actual size and used bytes of a heap allocation */
+typedef struct membuf_s
 {
 	uc8_t* data;
 	size_t size;
@@ -50,16 +54,20 @@ void membuf_init(membuf* mb);
 void membuf_clear(membuf* mb);
 void membuf_adjust_size(membuf* mb, size_t newsize);
 void membuf_free(membuf* mb);
-void membuf_copy(membuf* dst, membuf* src);
-void membuf_copy_auto(membuf* dst, membuf* src);
+void membuf_copy(membuf* dst, const membuf* src);
+void membuf_copy_auto(membuf* dst, const membuf* src);
 void membuf_append_byte_auto(membuf* mb, uc8_t value);
 void membuf_append_data_auto(membuf* mb, uc8_t* data, size_t sz);
 void membuf_prepend_byte_auto(membuf* mb, uc8_t value);
+void membuf_set_byte_auto(membuf* mb, uc8_t value, int pos, uc8_t padding);
 void membuf_yield(membuf* mb, uc8_t** recipient);
+void membuf_move(membuf* dst, membuf* src);
 
+/** PKCS#7 padding functions */
 size_t pad_data_buffer(uc8_t** memory, size_t* memsz, size_t used_size, size_t block_size);
 size_t unpad_data_buffer(uc8_t* data, size_t used_size);
 
+/* replaces console non printable chars with spaces */
 void make_printable(uc8_t* text, int len);
 
 #include "sha1/sha1.h"
@@ -71,3 +79,13 @@ void make_printable(uc8_t* text, int len);
 #define MD4_DIGEST_SZ 16
 
 void MD4(char* hash_out, const char* str, uint32_t len);
+
+inline int max_int(int a, int b)
+{
+	return (a > b) ? a : b;
+}
+
+inline int min_int(int a, int b)
+{
+	return (a < b) ? a : b;
+}

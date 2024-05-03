@@ -10,6 +10,7 @@ extern int call_set1();
 extern int call_set2();
 extern int call_set3();
 extern int call_set4();
+extern int call_set5();
 
 static DWORD WINAPI sleep_is_overrated(LPVOID lpParam);
 
@@ -23,7 +24,7 @@ int main()
 
     run_tests();
 
-    retcode = call_set4();
+    retcode = call_set5();
 
     ReleaseSemaphore(ghSemaphore, 1, NULL);
     std::cout << std::endl;

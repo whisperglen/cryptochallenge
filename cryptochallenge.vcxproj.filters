@@ -66,6 +66,12 @@
     <ClCompile Include="tcpcom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="set5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bignum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hextobase64.h">
@@ -87,6 +93,9 @@
       <Filter>Header Files\md4</Filter>
     </ClInclude>
     <ClInclude Include="tcpcom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bignum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

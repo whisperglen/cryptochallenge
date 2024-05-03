@@ -366,6 +366,19 @@ void membuf_yield(membuf* mb, uc8_t **recipient)
     mb->used = 0;
 }
 
+void membuf_move(membuf* dst, membuf* src)
+{
+    membuf_free(dst);
+
+    dst->data = src->data;
+    dst->size = src->size;
+    dst->used = src->used;
+
+    src->data = NULL;
+    src->size = 0;
+    src->used = 0;
+}
+
 void membuf_free(membuf* mb)
 {
     if (mb->data)
@@ -382,18 +395,24 @@ void membuf_clear(membuf* mb)
     mb->used = 0;
 }
 
-void membuf_copy(membuf* dst, membuf* src)
+void membuf_copy(membuf* dst, const membuf* src)
 {
-    size_t size = dst->size < src->used ? dst->size : src->used;
+    if (dst != src && dst->data && src->data)
+    {
+        size_t size = dst->size < src->used ? dst->size : src->used;
 
-    memcpy(dst->data, src->data, size);
-    dst->used = size;
+        memcpy(dst->data, src->data, size);
+        dst->used = size;
+    }
 }
 
-void membuf_copy_auto(membuf* dst, membuf* src)
+void membuf_copy_auto(membuf* dst, const membuf* src)
 {
-    membuf_adjust_size(dst, src->used);
-    membuf_copy(dst, src);
+    if (dst != src)
+    {
+        membuf_adjust_size(dst, src->used);
+        membuf_copy(dst, src);
+    }
 }
 
 void membuf_append_byte_auto(membuf* mb, uc8_t value)
@@ -430,6 +449,23 @@ void membuf_prepend_byte_auto(membuf* mb, uc8_t value)
 
     mb->data[0] = value;
     mb->used++;
+}
+
+void membuf_set_byte_auto(membuf* mb, uc8_t value, int pos, uc8_t padding)
+{
+    int used = mb->used;
+    if (pos + 1 > mb->size)
+    {
+        membuf_adjust_size(mb, pos + 1);
+    }
+    if (pos >= used)
+    {
+        //last byte will be filled-in later
+        memset(mb->data + used, padding, pos - used);
+        mb->used = pos + 1;
+    }
+
+    mb->data[pos] = value;
 }
 
 size_t pad_data_buffer(uc8_t** memory, size_t* memsz, size_t used_size, size_t block_size)

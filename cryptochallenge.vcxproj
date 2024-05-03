@@ -173,8 +173,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aes_helper.cpp" />
+    <ClCompile Include="bignum.cpp" />
     <ClCompile Include="hextobase64.cpp" />
     <ClCompile Include="md4\md4.c" />
+    <ClCompile Include="set5.cpp" />
     <ClCompile Include="sha1\sha1.c" />
     <ClCompile Include="tcpcom.cpp" />
     <ClCompile Include="_main.cpp" />
@@ -188,6 +190,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aes_helper.h" />
+    <ClInclude Include="bignum.h" />
     <ClInclude Include="hextobase64.h" />
     <ClInclude Include="md4\md4.h" />
     <ClInclude Include="mt19937.h" />
